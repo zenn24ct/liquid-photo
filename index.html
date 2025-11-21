@@ -1,0 +1,92 @@
+<!doctype html>
+<html lang="ja">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Liquid Scroll Gallery</title>
+
+<style>
+/* -------------------------------------------
+   全体のリセット & センター配置
+------------------------------------------- */
+body {
+  margin: 0;
+  background: #111;
+  height: 200vh; /* スクロール量を作るために高さを増やす */
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  overflow-x: hidden;
+  color: #fff;
+  font-family: sans-serif;
+}
+
+/* -------------------------------------------
+   画像の外枠（サイズ固定）
+------------------------------------------- */
+.image-wrapper {
+  width: 90vw;
+  max-width: 600px;
+  overflow: hidden;
+  border-radius: 16px;
+  position: sticky; /* スクロールしても中央に張り付く */
+  top: 20vh;
+}
+
+/* -------------------------------------------
+   画像本体
+   → CSS filter の波形変形を JS でコントロールする
+------------------------------------------- */
+img {
+  width: 100%;
+  display: block;
+  transition: filter 0.2s ease-out;
+  /* 初期は歪みゼロ */
+  filter: url(#wave);
+}
+</style>
+</head>
+<body>
+
+<!-- SVGフィルタ：波エフェクトを定義 -->
+<svg width="0" height="0">
+  <filter id="wave">
+    <!-- feTurbulence：乱流ノイズを生成（波っぽさの素） -->
+    <feTurbulence id="turbulence" type="fractalNoise"
+                  baseFrequency="0.01 0.02" numOctaves="2" seed="2"/>
+    <!-- feDisplacementMap：画像をノイズで変形させる -->
+    <feDisplacementMap in="SourceGraphic" scale="0" />
+  </filter>
+</svg>
+
+<div class="image-wrapper">
+  <img id="mainImage" src="image/cat.jpg" alt="gallery">
+</div>
+
+<script>
+/* ---------------------------------------------------
+   スクロール量に応じて波エフェクトの強さを変化させる
+ --------------------------------------------------- */
+const disp = document.querySelector("feDisplacementMap");
+const turb = document.getElementById("turbulence");
+
+window.addEventListener("scroll", () => {
+  // ページ全体のスクロール割合を0〜1で取得
+  const scrollY = window.scrollY;
+  const maxScroll = document.body.scrollHeight - window.innerHeight;
+  const scrollRate = scrollY / maxScroll;
+
+  // ----- 波の強さ（scale）を決める -----
+  const wavePower = Math.sin(scrollRate * Math.PI) * 40;
+
+  // 変形量を反映
+  disp.setAttribute("scale", wavePower);
+
+  // ノイズの時間変化で揺れる感じを出す
+  const time = scrollY * 0.002;
+  turb.setAttribute("baseFrequency", `0.01 ${0.02 + time}`);
+});
+</script>
+
+</body>
+</html>
